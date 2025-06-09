@@ -1,5 +1,5 @@
 <?php
-// event_details.php
+// event_details.php (UPDATED for delete competition)
 
 require_once 'db_connect.php';
 
@@ -10,25 +10,21 @@ $message = '';
 $message_type = '';
 
 if (!$event_id) {
-    // Redirect if no event_id is provided
     header('Location: /Digital_Judging_System/admin_events.php');
     exit();
 }
 
 try {
-    // Fetch event details
     $stmt = $pdo->prepare("SELECT event_id, event_name, created_at FROM Event WHERE event_id = ?");
     $stmt->execute([$event_id]);
     $event = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$event) {
-        // Event not found, redirect
         header('Location: /Digital_Judging_System/admin_events.php?error=event_not_found');
         exit();
     }
     $event_name = $event['event_name'];
 
-    // Fetch competitions for this event
     $stmt = $pdo->prepare("SELECT
                                 C.competition_id,
                                 C.competition_name,
@@ -51,7 +47,6 @@ try {
     error_log("Error in event_details.php: " . $e->getMessage());
 }
 
-// Check for messages from other pages (e.g., after competition creation)
 if (isset($_GET['status']) && isset($_GET['message'])) {
     $message = htmlspecialchars($_GET['message']);
     $message_type = htmlspecialchars($_GET['status']);
@@ -67,9 +62,8 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/Digital_Judging_System/css/style.css">
     <style>
-        /* Specific styling for event_details page */
         .event-header {
-            background-color: #34495e; /* Darker blue-gray */
+            background-color: #34495e;
             color: white;
             padding: 20px;
             border-radius: 8px;
@@ -159,6 +153,23 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
         .back-to-events-btn:hover {
             background-color: #7f8c8d;
         }
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -197,7 +208,7 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                         <div class="competition-actions">
                             <button class="btn view-btn" onclick="location.href='/Digital_Judging_System/competition_details.php?competition_id=<?php echo htmlspecialchars($comp['competition_id']); ?>'">Manage</button>
                             <button class="btn edit-btn">Edit</button>
-                            <button class="btn delete-btn">Delete</button>
+                            <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this competition and ALL its associated data (categories, participants, judges assignments)? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_competition.php?competition_id=<?php echo htmlspecialchars($comp['competition_id']); ?>&event_id=<?php echo htmlspecialchars($event_id); ?>'; }">Delete</button>
                         </div>
                     </li>
                 <?php endforeach; ?>

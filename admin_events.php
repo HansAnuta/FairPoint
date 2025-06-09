@@ -20,18 +20,20 @@
             <button class="create-event-btn" onclick="location.href='/Digital_Judging_System/create_event_step1.php'">+ Create New Event</button>
         </div>
 
+        <?php
+        // Display messages from redirects
+        if (isset($_GET['status']) && isset($_GET['message'])) {
+            echo '<div class="message ' . htmlspecialchars($_GET['status']) . '">' . htmlspecialchars($_GET['message']) . '</div>';
+        }
+        ?>
+
         <ul class="event-list" id="eventList">
             <?php
             require_once 'db_connect.php';
 
-            // Assume admin_id = 1 for demonstration. Replace with session management in a real app.
             $admin_id_for_demo = 1;
 
             try {
-                // Fetch events managed by this admin
-                // Note: The query for fetching events now does NOT join JudgingMethod directly,
-                // as judging method is on Competition level. If you need to display
-                // judging methods for *all* competitions within an event here, it would be more complex.
                 $stmt = $pdo->prepare("SELECT
                                             E.event_id,
                                             E.event_name,
@@ -50,14 +52,13 @@
                         echo '<li class="event-item">';
                         echo '<div class="event-details">';
                         echo '<h3>' . htmlspecialchars($event['event_name']) . '</h3>';
-                        // Removed judging method display here as it's now per competition
                         echo ' <p>Created: ' . date('Y-m-d', strtotime($event['created_at'])) . '</p>';
                         echo '</div>';
                         echo '<div class="event-actions">';
-                        // Updated View button to go to event_details.php
                         echo '<button class="btn view-btn" onclick="location.href=\'/Digital_Judging_System/event_details.php?event_id=' . htmlspecialchars($event['event_id']) . '\'">View/Manage</button>';
                         echo '<button class="btn edit-btn" onclick="editEvent(\'' . htmlspecialchars($event['event_id']) . '\')">Edit Event</button>';
-                        echo '<button class="btn delete-btn" onclick="deleteEvent(\'' . htmlspecialchars($event['event_id']) . '\')">Delete Event</button>';
+                        // Added JavaScript confirmation for delete
+                        echo '<button class="btn delete-btn" onclick="if(confirm(\'Are you sure you want to delete this event and ALL its associated data (competitions, participants, judges assignments)? This action cannot be undone.\')) { location.href=\'/Digital_Judging_System/delete_event.php?event_id=' . htmlspecialchars($event['event_id']) . '\'; }">Delete Event</button>';
                         echo '</div>';
                         echo '</li>';
                     }
