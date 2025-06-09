@@ -1,5 +1,5 @@
 <?php
-// Digital_Judging_System/manage_participants.php (UPDATED for delete participant)
+// Digital_Judging_System/manage_participants.php (UPDATED for edit participant)
 
 require_once 'db_connect.php';
 
@@ -288,7 +288,7 @@ $back_url = '/Digital_Judging_System/competition_details.php?competition_id=' . 
                         <li>
                             <span><?php echo htmlspecialchars($participant['participant_name']); ?></span>
                             <div class="actions">
-                                <button class="btn edit-btn">Edit</button>
+                                <button class="btn edit-btn" onclick="editParticipant('<?php echo htmlspecialchars($participant['participant_id']); ?>')">Edit</button>
                                 <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this participant? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_participant.php?participant_id=' + <?php echo htmlspecialchars($participant['participant_id']); ?> + '&competition_id=' + <?php echo htmlspecialchars($competition_id); ?>; }">Delete</button>
                             </div>
                         </li>
@@ -303,5 +303,11 @@ $back_url = '/Digital_Judging_System/competition_details.php?competition_id=' . 
     </div>
 
     <script src="/Digital_Judging_System/js/script.js"></script>
+    <script>
+        // Implemented editParticipant function
+        function editParticipant(participantId) {
+            window.location.href = '/Digital_Judging_System/edit_participant.php?participant_id=' + participantId;
+        }
+    </script>
 </body>
 </html>

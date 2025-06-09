@@ -1,5 +1,5 @@
 <?php
-// Digital_Judging_System/competition_details.php (UPDATED for delete category/participant)
+// Digital_Judging_System/competition_details.php (UPDATED for edit category)
 
 require_once 'db_connect.php';
 
@@ -201,8 +201,8 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                 <p>Event: <?php echo htmlspecialchars($competition['event_name']); ?> | Judging Method: <?php echo htmlspecialchars($competition['method_name']); ?> | Type: <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $competition['competition_type']))); ?></p>
             </div>
             <div>
-                <button class="btn edit-btn">Edit Comp</button>
-                <button class="btn delete-btn">Delete Comp</button>
+                <button class="btn edit-btn" onclick="editCompetition('<?php echo htmlspecialchars($competition['competition_id']); ?>')">Edit Comp</button>
+                <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this competition and ALL its associated data (categories, participants, judges assignments)? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_competition.php?competition_id=<?php echo htmlspecialchars($competition['competition_id']); ?>&event_id=<?php echo htmlspecialchars($competition['event_id']); ?>'; }">Delete Comp</button>
             </div>
         </div>
 
@@ -223,7 +223,10 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                         <li>
                             <span><?php echo htmlspecialchars($judge['email']); ?></span>
                             <div class="actions">
-                                <button class="btn delete-btn">Unassign</button>
+                                <form action="/Digital_Judging_System/assign_judges.php?competition_id=<?php echo htmlspecialchars($competition_id); ?>" method="POST" style="display:inline;">
+                                    <input type="hidden" name="unassign_judge_id" value="<?php echo htmlspecialchars($judge['judge_id']); ?>">
+                                    <button type="submit" class="btn delete-btn" onclick="return confirm('Are you sure you want to unassign <?php echo htmlspecialchars($judge['email']); ?> from this competition?');">Unassign</button>
+                                </form>
                             </div>
                         </li>
                     <?php endforeach; ?>
@@ -250,7 +253,7 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                                 <div class="actions">
                                     <button class="btn view-btn" onclick="location.href='/Digital_Judging_System/manage_participants.php?category_id=<?php echo htmlspecialchars($category['category_id']); ?>'">Participants</button>
                                     <button class="btn view-btn" onclick="location.href='/Digital_Judging_System/assign_judges.php?competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($category['category_id']); ?>'">Judges</button>
-                                    <button class="btn edit-btn">Edit</button>
+                                    <button class="btn edit-btn" onclick="editCategory('<?php echo htmlspecialchars($category['category_id']); ?>')">Edit</button>
                                     <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this category and ALL its associated participants and judges assignments? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_category.php?category_id=' + <?php echo htmlspecialchars($category['category_id']); ?> + '&competition_id=' + <?php echo htmlspecialchars($competition_id); ?>; }">Delete</button>
                                 </div>
                             </li>
@@ -274,8 +277,8 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                             <li>
                                 <span><?php echo htmlspecialchars($participant['participant_name']); ?></span>
                                 <div class="actions">
-                                    <button class="btn edit-btn">Edit</button>
-                                    <button class="btn delete-btn">Delete</button>
+                                    <button class="btn edit-btn" onclick="editParticipant('<?php echo htmlspecialchars($participant['participant_id']); ?>')">Edit</button>
+                                    <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this participant? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_participant.php?participant_id=' + <?php echo htmlspecialchars($participant['participant_id']); ?> + '&competition_id=' + <?php echo htmlspecialchars($competition_id); ?>; }">Delete</button>
                                 </div>
                             </li>
                         <?php endforeach; ?>
@@ -291,5 +294,18 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
     </div>
 
     <script src="/Digital_Judging_System/js/script.js"></script>
+    <script>
+        function editCompetition(competitionId) {
+            window.location.href = '/Digital_Judging_System/edit_competition.php?competition_id=' + competitionId;
+        }
+        // Implemented editCategory function
+        function editCategory(categoryId) {
+            window.location.href = '/Digital_Judging_System/edit_category.php?category_id=' + categoryId;
+        }
+        function editParticipant(participantId) {
+            alert('Edit Participant ID: ' + participantId + ' - functionality coming soon!');
+            // window.location.href = '/Digital_Judging_System/edit_participant.php?participant_id=' + participantId;
+        }
+    </script>
 </body>
 </html>

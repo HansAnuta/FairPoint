@@ -1,5 +1,5 @@
 <?php
-// event_details.php (UPDATED for delete competition)
+// event_details.php (UPDATED for edit competition)
 
 require_once 'db_connect.php';
 
@@ -207,8 +207,8 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
                         </div>
                         <div class="competition-actions">
                             <button class="btn view-btn" onclick="location.href='/Digital_Judging_System/competition_details.php?competition_id=<?php echo htmlspecialchars($comp['competition_id']); ?>'">Manage</button>
-                            <button class="btn edit-btn">Edit</button>
-                            <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this competition and ALL its associated data (categories, participants, judges assignments)? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_competition.php?competition_id=<?php echo htmlspecialchars($comp['competition_id']); ?>&event_id=<?php echo htmlspecialchars($event_id); ?>'; }">Delete</button>
+                            <button class="btn edit-btn" onclick="editCompetition('<?php echo htmlspecialchars($comp['competition_id']); ?>')">Edit</button>
+                            <button class="btn delete-btn" onclick="if(confirm('Are you sure you want to delete this competition and ALL its associated data (categories, participants, judges assignments)? This action cannot be undone.')) { location.href='/Digital_Judging_System/delete_competition.php?competition_id=' + <?php echo htmlspecialchars($comp['competition_id']); ?> + '&event_id=' + <?php echo htmlspecialchars($event_id); ?>; }">Delete</button>
                         </div>
                     </li>
                 <?php endforeach; ?>
@@ -221,5 +221,11 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
     </div>
 
     <script src="/Digital_Judging_System/js/script.js"></script>
+    <script>
+        // Implemented editCompetition function
+        function editCompetition(competitionId) {
+            window.location.href = '/Digital_Judging_System/edit_competition.php?competition_id=' + competitionId;
+        }
+    </script>
 </body>
 </html>
