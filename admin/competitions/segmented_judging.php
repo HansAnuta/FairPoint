@@ -13,7 +13,6 @@ if (!isset($competition_id)) {
 global $conn;
 
 // Fetch participants for this competition (may or may not be tied to specific categories at this level)
-// For segmented, participants are usually tied to a category. Fetch those without category_id for now if any.
 $participants = [];
 $stmt_part = $conn->prepare("SELECT participant_id, participant_name, category_id FROM participants WHERE competition_id = ? ORDER BY participant_name ASC");
 if ($stmt_part) {
@@ -75,8 +74,15 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                             <?php endif; ?>
                         </div>
                         <div class="card-buttons">
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../participants/edit_participant.php?participant_id=<?php echo htmlspecialchars($participant['participant_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($participant['participant_id']); ?>"
+                                    data-type="participant"
+                                    data-name="<?php echo htmlspecialchars($participant['participant_name']); ?>"
+                                    data-url="../participants/delete_participant.php?participant_id="
+                                    data-confirm-message="Are you sure you want to delete the participant '<?php echo htmlspecialchars($participant['participant_name']); ?>'?">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -100,8 +106,16 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                         </div>
                         <div class="card-buttons">
                             <a href="../categories/manage_category.php?category_id=<?php echo htmlspecialchars($category['category_id']); ?>" class="button button-secondary">Manage Category</a>
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../categories/edit_category.php?category_id=<?php echo htmlspecialchars($category['category_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($category['category_id']); ?>"
+                                    data-type="category"
+                                    data-name="<?php echo htmlspecialchars($category['category_name']); ?>"
+                                    data-url="../categories/delete_category.php?category_id="
+                                    data-extra-params="&competition_id=<?php echo htmlspecialchars($competition_id); ?>"
+                                    data-confirm-message="Are you sure you want to delete the category '<?php echo htmlspecialchars($category['category_name']); ?>'? This will also delete its associated participants and criteria.">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>

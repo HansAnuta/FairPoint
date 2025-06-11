@@ -17,8 +17,6 @@ $message = '';
 $category_id = $_GET['category_id'] ?? null;
 $category_name = '';
 $competition_id = null; // To redirect back to the correct competition management page
-$participants = [];
-$criteria = [];
 
 // Check for and display messages from redirects
 if (isset($_GET['message'])) {
@@ -59,6 +57,7 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
 
 
 // Fetch Participants for this category
+$participants = [];
 $stmt_participants = $conn->prepare("SELECT participant_id, participant_name FROM participants WHERE category_id = ? ORDER BY participant_name ASC");
 if ($stmt_participants) {
     $stmt_participants->bind_param("i", $category_id);
@@ -73,6 +72,7 @@ if ($stmt_participants) {
 }
 
 // Fetch Criteria for this category
+$criteria = [];
 $stmt_criteria = $conn->prepare("SELECT criteria_id, criteria_name, weight FROM criteria WHERE category_id = ? ORDER BY criteria_name ASC");
 if ($stmt_criteria) {
     $stmt_criteria->bind_param("i", $category_id);
@@ -151,6 +151,51 @@ $conn->close();
         .button-secondary { background-color: #6c757d; }
         .button-edit { background-color: #ffc107; color: black;}
         .button-delete { background-color: #dc3545; }
+
+        /* Modal Styles (basic structure, no design) - Duplicated for category level */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more responsive */
+            max-width: 500px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+            text-align: center;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -186,8 +231,16 @@ $conn->close();
                                         <h3 class="item-name"><?php echo htmlspecialchars($participant['participant_name']); ?></h3>
                                     </div>
                                     <div class="card-buttons">
-                                        <a href="#" class="button button-edit">Edit</a>
-                                        <a href="#" class="button button-delete">Delete</a>
+                                        <a href="../participants/edit_participant.php?participant_id=<?php echo htmlspecialchars($participant['participant_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($category_id); ?>" class="button button-edit">Edit</a>
+                                        <button type="button" class="button button-delete open-cat-delete-modal"
+                                                data-id="<?php echo htmlspecialchars($participant['participant_id']); ?>"
+                                                data-type="participant"
+                                                data-name="<?php echo htmlspecialchars($participant['participant_name']); ?>"
+                                                data-url="../participants/delete_participant.php?participant_id="
+                                                data-extra-params="&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($category_id); ?>"
+                                                data-confirm-message="Are you sure you want to delete the participant '<?php echo htmlspecialchars($participant['participant_name']); ?>'?">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -211,8 +264,16 @@ $conn->close();
                                         <p class="item-weight">Weight: <?php echo htmlspecialchars($criterion['weight']); ?></p>
                                     </div>
                                     <div class="card-buttons">
-                                        <a href="#" class="button button-edit">Edit</a>
-                                        <a href="#" class="button button-delete">Delete</a>
+                                        <a href="../criteria/edit_criteria.php?criteria_id=<?php echo htmlspecialchars($criterion['criteria_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($category_id); ?>" class="button button-edit">Edit</a>
+                                        <button type="button" class="button button-delete open-cat-delete-modal"
+                                                data-id="<?php echo htmlspecialchars($criterion['criteria_id']); ?>"
+                                                data-type="criteria"
+                                                data-name="<?php echo htmlspecialchars($criterion['criteria_name']); ?>"
+                                                data-url="../criteria/delete_criteria.php?criteria_id="
+                                                data-extra-params="&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($category_id); ?>"
+                                                data-confirm-message="Are you sure you want to delete the criteria '<?php echo htmlspecialchars($criterion['criteria_name']); ?>'?">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -230,6 +291,18 @@ $conn->close();
         <footer class="main-footer">
             <p class="footer-text">&copy; 2025 Digital Judging System. All rights reserved.</p>
         </footer>
+    </div>
+
+    <!-- Custom Delete Confirmation Modal (for items managed within categories) -->
+    <div id="catDeleteConfirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <p id="catModalConfirmMessage">Are you sure you want to delete this item?</p>
+            <div class="modal-buttons">
+                <button id="catConfirmDeleteButton" class="button button-delete">Confirm Delete</button>
+                <button id="catCancelDeleteButton" class="button button-secondary">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -267,6 +340,55 @@ $conn->close();
                     document.querySelector('.tab-button[data-tab="participants"]').click();
                 }
             }
+
+            // --- Custom Delete Modal Logic for Category Level ---
+            function setupCategoryDeleteModal(modalId) {
+                const deleteModal = document.getElementById(modalId);
+                if (!deleteModal) return;
+
+                const closeButton = deleteModal.querySelector('.close-button');
+                const confirmDeleteButton = deleteModal.querySelector('[id$="ConfirmDeleteButton"]');
+                const cancelDeleteButton = deleteModal.querySelector('[id$="CancelDeleteButton"]');
+                const modalConfirmMessage = deleteModal.querySelector('[id$="ModalConfirmMessage"]');
+
+                window.openCatDeleteModal = function(id, type, name, url, extraParams, confirmMessage) {
+                    modalConfirmMessage.innerHTML = confirmMessage;
+                    confirmDeleteButton.onclick = function() {
+                        window.location.href = url + id + (extraParams || ''); // Append extra parameters
+                    };
+                    deleteModal.style.display = 'flex';
+                };
+
+                function closeCatDeleteModal() {
+                    deleteModal.style.display = 'none';
+                }
+
+                document.querySelectorAll('.open-cat-delete-modal').forEach(button => {
+                    button.removeEventListener('click', handleOpenCatModalClick); // Prevent duplicate
+                    button.addEventListener('click', handleOpenCatModalClick);
+                });
+
+                closeButton.addEventListener('click', closeCatDeleteModal);
+                cancelDeleteButton.addEventListener('click', closeCatDeleteModal);
+
+                window.addEventListener('click', function(event) {
+                    if (event.target == deleteModal) {
+                        closeCatDeleteModal();
+                    }
+                });
+            }
+
+            function handleOpenCatModalClick() {
+                const id = this.dataset.id;
+                const type = this.dataset.type;
+                const name = this.dataset.name;
+                const url = this.dataset.url;
+                const extraParams = this.dataset.extraParams; // Get extra parameters
+                const confirmMessage = this.dataset.confirmMessage;
+                window.openCatDeleteModal(id, type, name, url, extraParams, confirmMessage);
+            }
+
+            setupCategoryDeleteModal('catDeleteConfirmationModal');
         });
     </script>
 </body>

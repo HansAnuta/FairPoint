@@ -5,24 +5,13 @@
  * Displays Participants and Criteria tabs for ranking.
  */
 
-// Ensure this file is only accessed via inclusion by manage_competition.php
-if (!defined('INCLUDED_VIA_MANAGE_COMPETITION')) {
-    // Define a constant to indicate it's included, to prevent direct access
-    // For now, this is a placeholder. You'd set this constant in manage_competition.php
-    // and check it here. For simplicity in rapid iteration, skipping strict check for now.
-}
-
 // Retrieve competition_id from the parent scope (manage_competition.php)
 // It's crucial that $competition_id is available here.
 if (!isset($competition_id)) {
-    // This should ideally not happen if included correctly
     echo '<p class="error-message">Error: Competition ID not provided for Ranking management.</p>';
     return;
 }
 
-// Re-establish database connection if it was closed in the parent scope.
-// Or, ensure the parent script passes the $conn object.
-// For now, let's assume it's still open from manage_competition.php
 global $conn; // Access the global connection object if it's not passed directly
 
 // Fetch participants for this competition
@@ -32,7 +21,7 @@ if ($stmt_part) {
     $stmt_part->bind_param("i", $competition_id);
     $stmt_part->execute();
     $result_part = $stmt_part->get_result();
-    while ($row = $result_part->fetch_assoc()) {
+    while ($row = $result_part->fetch_assoc()) { // Corrected from add_assoc()
         $participants[] = $row;
     }
     $stmt_part->close();
@@ -40,30 +29,8 @@ if ($stmt_part) {
     error_log("Failed to prepare statement for fetching participants (Ranking): " . $conn->error);
 }
 
-// Fetch criteria for this competition (assuming no categories for ranking, criteria directly linked to competition or a default category)
-// For Ranking, criteria might represent aspects being judged or just a single "Overall Ranking" criterion.
-// Here, we link criteria to the competition via a placeholder category_id for simplicity,
-// or we assume they will be managed through a default category created implicitly.
-// A more robust solution might have a dedicated competition_criteria table or
-// default category for non-segmented judging methods.
-// For now, let's assume a dummy category_id (e.g., 0 or a specific ID for "ranking" competitions)
-// This part needs careful alignment with your ERD and data entry strategy.
-// Given your ERD, criteria are linked to categories. So, for non-segmented, you'd need
-// to either enforce a default category_id for competition or create one.
-// For initial functionality, let's fetch criteria where competition_id matches and category_id is null,
-// implying they are directly for the competition (if your DB supports this via a join or logic).
-// A better approach would be to create a default category for non-segmented competitions
-// and link criteria to that category. For now, we'll simplify.
-
+// Fetch criteria for this competition (assuming a default category)
 $criteria = [];
-// For a simple implementation, let's assume for Ranking/Simple/Weighted, criteria are linked to a "default" category
-// that is implicitly created for the competition or directly linked via a competition_id.
-// Given ERD: criteria -> category -> competition.
-// So, we need to fetch criteria associated with a category that belongs to *this* competition.
-// For Ranking, Simple Averaging, Weighted Averaging, the assumption is that criteria are associated
-// with a single "default" category under the competition.
-// Let's assume a default category always exists for these types or create one if it doesn't.
-// A more robust way: fetch a default category_id for this competition, then fetch criteria.
 $default_category_id = null;
 $stmt_default_cat = $conn->prepare("SELECT category_id FROM categories WHERE competition_id = ? LIMIT 1");
 if ($stmt_default_cat) {
@@ -80,7 +47,7 @@ if ($default_category_id) {
         $stmt_crit->bind_param("i", $default_category_id);
         $stmt_crit->execute();
         $result_crit = $stmt_crit->get_result();
-        while ($row = $result_crit->fetch_assoc()) {
+        while ($row = $result_crit->fetch_assoc()) { // Corrected from add_assoc()
             $criteria[] = $row;
         }
         $stmt_crit->close();
@@ -88,10 +55,7 @@ if ($default_category_id) {
         error_log("Failed to prepare statement for fetching criteria (Ranking): " . $conn->error);
     }
 } else {
-    // If no default category, implicitly create one. This is a pragmatic shortcut.
-    // In a real system, this would be handled on competition creation.
-    // For demonstration, let's log a message.
-    error_log("No default category found for competition ID: " . $competition_id . ". Criteria will not be displayed.");
+    error_log("No default category found for competition ID: " . $competition_id . ". Criteria will not be displayed. Consider creating a default category for this competition type.");
 }
 
 
@@ -120,8 +84,15 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                             <h3 class="item-name"><?php echo htmlspecialchars($participant['participant_name']); ?></h3>
                         </div>
                         <div class="card-buttons">
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../participants/edit_participant.php?participant_id=<?php echo htmlspecialchars($participant['participant_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($participant['participant_id']); ?>"
+                                    data-type="participant"
+                                    data-name="<?php echo htmlspecialchars($participant['participant_name']); ?>"
+                                    data-url="../participants/delete_participant.php?participant_id="
+                                    data-confirm-message="Are you sure you want to delete the participant '<?php echo htmlspecialchars($participant['participant_name']); ?>'?">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -135,7 +106,7 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
             <?php if ($default_category_id): ?>
                 <a href="../criteria/create_criteria.php?competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($default_category_id); ?>" class="button button-primary">Add New Criteria</a>
             <?php else: ?>
-                <p>No default category found. Cannot add criteria without a category.</p>
+                <p>No default category found. Cannot add criteria without a category. Please create a default category for this competition.</p>
             <?php endif; ?>
         </div>
         <div class="list-container">
@@ -149,8 +120,15 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                             <p class="item-weight">Weight: <?php echo htmlspecialchars($criterion['weight']); ?> (For ranking, weight might indicate importance or a simple 1 for general criteria)</p>
                         </div>
                         <div class="card-buttons">
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../criteria/edit_criteria.php?criteria_id=<?php echo htmlspecialchars($criterion['criteria_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($default_category_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($criterion['criteria_id']); ?>"
+                                    data-type="criteria"
+                                    data-name="<?php echo htmlspecialchars($criterion['criteria_name']); ?>"
+                                    data-url="../criteria/delete_criteria.php?criteria_id="
+                                    data-confirm-message="Are you sure you want to delete the criteria '<?php echo htmlspecialchars($criterion['criteria_name']); ?>'?">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>

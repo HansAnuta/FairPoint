@@ -53,7 +53,7 @@ if ($default_category_id) {
         error_log("Failed to prepare statement for fetching criteria (Simple Averaging): " . $conn->error);
     }
 } else {
-    error_log("No default category found for competition ID: " . $competition_id . ". Criteria will not be displayed.");
+    error_log("No default category found for competition ID: " . $competition_id . ". Criteria will not be displayed. Consider creating a default category for this competition type.");
 }
 
 // Determine active sub-tab
@@ -81,8 +81,15 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                             <h3 class="item-name"><?php echo htmlspecialchars($participant['participant_name']); ?></h3>
                         </div>
                         <div class="card-buttons">
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../participants/edit_participant.php?participant_id=<?php echo htmlspecialchars($participant['participant_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($participant['participant_id']); ?>"
+                                    data-type="participant"
+                                    data-name="<?php echo htmlspecialchars($participant['participant_name']); ?>"
+                                    data-url="../participants/delete_participant.php?participant_id="
+                                    data-confirm-message="Are you sure you want to delete the participant '<?php echo htmlspecialchars($participant['participant_name']); ?>'?">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -96,7 +103,7 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
             <?php if ($default_category_id): ?>
                 <a href="../criteria/create_criteria.php?competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($default_category_id); ?>" class="button button-primary">Add New Criteria</a>
             <?php else: ?>
-                <p>No default category found. Cannot add criteria without a category.</p>
+                <p>No default category found. Cannot add criteria without a category. Please create a default category for this competition.</p>
             <?php endif; ?>
         </div>
         <div class="list-container">
@@ -110,8 +117,15 @@ $active_subtab = $_GET['subtab'] ?? 'participants';
                             <p class="item-weight">Weight: <?php echo htmlspecialchars($criterion['weight']); ?> (Often 1 or ignored for simple averaging)</p>
                         </div>
                         <div class="card-buttons">
-                            <a href="#" class="button button-edit">Edit</a>
-                            <a href="#" class="button button-delete">Delete</a>
+                            <a href="../criteria/edit_criteria.php?criteria_id=<?php echo htmlspecialchars($criterion['criteria_id']); ?>&competition_id=<?php echo htmlspecialchars($competition_id); ?>&category_id=<?php echo htmlspecialchars($default_category_id); ?>" class="button button-edit">Edit</a>
+                            <button type="button" class="button button-delete open-comp-delete-modal"
+                                    data-id="<?php echo htmlspecialchars($criterion['criteria_id']); ?>"
+                                    data-type="criteria"
+                                    data-name="<?php echo htmlspecialchars($criterion['criteria_name']); ?>"
+                                    data-url="../criteria/delete_criteria.php?criteria_id="
+                                    data-confirm-message="Are you sure you want to delete the criteria '<?php echo htmlspecialchars($criterion['criteria_name']); ?>'?">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
