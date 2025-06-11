@@ -1,0 +1,132 @@
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(191) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME
+);
+
+CREATE TABLE admins (
+    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(191) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE judges (
+    judge_id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(191) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE events (
+    event_id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,
+    event_name VARCHAR(191) NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id)
+);
+
+CREATE TABLE judging_methods (
+    judging_method_id INT PRIMARY KEY AUTO_INCREMENT,
+    method_name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE competitions (
+    competition_id INT PRIMARY KEY AUTO_INCREMENT,
+    event_id INT NOT NULL,
+    judging_method_id INT NOT NULL,
+    competition_name VARCHAR(191) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (event_id) REFERENCES events(event_id),
+    FOREIGN KEY (judging_method_id) REFERENCES judging_methods(judging_method_id)
+);
+
+CREATE TABLE categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    competition_id INT NOT NULL,
+    category_name VARCHAR(191) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (competition_id) REFERENCES competitions(competition_id)
+);
+
+CREATE TABLE criteria (
+    criteria_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_id INT NOT NULL,
+    criteria_name VARCHAR(191) NOT NULL,
+    weight DECIMAL(5,2) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+CREATE TABLE participants (
+    participant_id INT PRIMARY KEY AUTO_INCREMENT,
+    competition_id INT NOT NULL,
+    category_id INT NOT NULL,
+    participant_name VARCHAR(191) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (competition_id) REFERENCES competitions(competition_id),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+CREATE TABLE scores (
+    score_id INT PRIMARY KEY AUTO_INCREMENT,
+    judge_id INT NOT NULL,
+    criteria_id INT NOT NULL,
+    participant_id INT NOT NULL,
+    score_value DECIMAL(5,2) NOT NULL, -- DECIMAL(precision, scale) for scores like 80.50
+    submitted_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (judge_id) REFERENCES judges(judge_id),
+    FOREIGN KEY (criteria_id) REFERENCES criteria(criteria_id),
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
+CREATE TABLE assignments (
+    assignment_id INT PRIMARY KEY AUTO_INCREMENT,
+    judge_id INT NOT NULL,
+    competition_id INT NOT NULL,
+    category_id INT NOT NULL,
+    event_id INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (judge_id) REFERENCES judges(judge_id),
+    FOREIGN KEY (competition_id) REFERENCES competitions(competition_id),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    FOREIGN KEY (event_id) REFERENCES events(event_id)
+);
+
+CREATE TABLE judge_links (
+    link_id INT PRIMARY KEY AUTO_INCREMENT,
+    judge_id INT NOT NULL,
+    event_id INT NOT NULL,
+    token VARCHAR(191) NOT NULL UNIQUE,
+    expiration_date DATETIME NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (judge_id) REFERENCES judges(judge_id),
+    FOREIGN KEY (event_id) REFERENCES events(event_id)
+);
+
+CREATE TABLE activity_logs (
+    log_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    user_role VARCHAR(50) NOT NULL,
+    action VARCHAR(191) NOT NULL,
+    description TEXT,
+    timestamp DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);

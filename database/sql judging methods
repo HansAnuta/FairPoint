@@ -1,0 +1,21 @@
+INSERT INTO judging_methods (judging_method_id, method_name, description) VALUES
+(1, 'Ranking', 'Participants are ranked from 1st to Nth.')
+ON DUPLICATE KEY UPDATE method_name=VALUES(method_name), description=VALUES(description);
+
+INSERT INTO judging_methods (judging_method_id, method_name, description) VALUES
+(2, 'Simple Averaging', 'Scores are averaged across all judges for each criterion.')
+ON DUPLICATE KEY UPDATE method_name=VALUES(method_name), description=VALUES(description);
+
+INSERT INTO judging_methods (judging_method_id, method_name, description) VALUES
+(3, 'Weighted Averaging', 'Scores are weighted by criteria importance and then averaged.')
+ON DUPLICATE KEY UPDATE method_name=VALUES(method_name), description=VALUES(description);
+
+INSERT INTO judging_methods (judging_method_id, method_name, description) VALUES
+(4, 'Segmented Judging', 'Judging occurs in multiple distinct segments or rounds.')
+ON DUPLICATE KEY UPDATE method_name=VALUES(method_name), description=VALUES(description);
+
+INSERT INTO judging_methods (judging_method_id, method_name, description) VALUES
+(5, 'Elimination and Bracketing', 'Participants are eliminated in rounds, often in a bracket format.')
+ON DUPLICATE KEY UPDATE method_name=VALUES(method_name), description=VALUES(description);
+
+--warning  Warning: #1287 'VALUES function' is deprecated and will be removed in a future release. Please use an alias (INSERT INTO ... VALUES (...) AS alias) and replace VALUES(col) in the ON DUPLICATE KEY UPDATE clause with alias.col instead
